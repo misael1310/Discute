@@ -21,7 +21,10 @@ def display_chat_history() -> None:
             role_label = "**Me**" if msg["role"] == "me" else "**Assistant**"
             st.write(role_label)
             if role_label == "**Me**":
-                st.audio(msg["audio"], format="audio/wav")            
+                if "audio" in msg:
+                    st.audio(msg["audio"], format="audio/wav")
+                else:
+                    st.error("Error processing user's audio, please try again.")  
             with st.expander("Show details", expanded=False):
                 st.write(f"**Message:** {msg['content']}")
 
