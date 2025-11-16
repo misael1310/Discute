@@ -4,16 +4,8 @@ from main import transcribe_audio, generate_response
 from prompt_managements import pm
 
 # Constants
-DEFAULT_VOICE = "af_heart"
 MODEL_CONTEXT = "openai/gpt-oss-20b"
 MODEL_CHAT = "openai/gpt-oss-20b"
-VOICES = {
-        "American Woman 1": "af_heart",
-        "American Woman 2": "af_bella",
-        "American Man": "am_fenrir",
-        "British Woman": "bf_emma",
-        "British Man": "bm_fable"
-}
 
 def init_session_state() -> None:
     """Initialize session state variables if they don't exist"""
