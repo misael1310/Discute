@@ -35,14 +35,6 @@ def format_chat_history() -> str:
             for msg in st.session_state.chat
     )
 
-def generate_context(prompt: str, api_key: str) -> None:
-    """Generate context based on a provided prompt and API key"""
-    if not api_key:
-        st.error("Please enter your Groq API key to generate the context.")
-        return
-
-    st.session_state.context = generate_response(prompt, MODEL_CONTEXT, api_key)
-
 def main():
     """Main application function"""
     # App header
@@ -54,23 +46,6 @@ def main():
 
     # Initialize session state
     init_session_state()
-
-    # Context generation section
-    col1, col2 = st.columns(2, border=True)
-
-    with col1:
-        st.write("**Context Prompt**")
-        situation = st.text_input("Situation", placeholder="Describe the situation")
-        context_prompt = pm.get_prompt("context_prompt", variables={"Situation": situation})
-
-        if st.button("Generate Context Prompt"):
-            generate_context(context_prompt, groq_api_key)
-
-    with col2:
-        st.write("**Random Context Generation**")
-
-        if st.button("Generate Random Context", use_container_width=True):
-            generate_context(pm.get_prompt("random_context"), groq_api_key)
 
     # Display the current context
     if st.session_state.context:
