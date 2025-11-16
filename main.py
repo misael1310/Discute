@@ -63,4 +63,4 @@ def generate_response(prompt: str, model_name: str, groq_api_key: str) -> str:
         return response.content if response else "No response generated."
 
     except Exception as e:
-        return f"Error generating response: {str(e)}"
+        return f"Error generating response: {e!s}"
