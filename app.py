@@ -111,11 +111,11 @@ def main():
 
                 chat_prompt = pm.get_prompt("chat_prompt", variables=prompt_vars)
                 ai_response = generate_response(chat_prompt, MODEL_CHAT, groq_api_key)
-                
+
                 # Add to chat history
                 st.session_state.chat.append({
                         "role": "you",
-                        "content": ai_response,                        
+                        "content": ai_response,
                 })
 
                 # Refresh the page
