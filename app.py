@@ -1,12 +1,12 @@
 import streamlit as st
 
-from main import transcribe_audio, generate_response, generate_audio
+from main import transcribe_audio, generate_response
 from prompt_managements import pm
 
 # Constants
 DEFAULT_VOICE = "af_heart"
-MODEL_CONTEXT = "gemma2-9b-it"
-MODEL_CHAT = "mistral-saba-24b"
+MODEL_CONTEXT = "openai/gpt-oss-20b"
+MODEL_CHAT = "openai/gpt-oss-20b"
 VOICES = {
         "American Woman 1": "af_heart",
         "American Woman 2": "af_bella",
@@ -21,8 +21,6 @@ def init_session_state() -> None:
         st.session_state.context = ""
     if "chat" not in st.session_state:
         st.session_state.chat = []
-    if "voice" not in st.session_state:
-        st.session_state.voice = DEFAULT_VOICE
 
 def display_chat_history() -> None:
     """Display the chat history with audio playback"""
@@ -30,7 +28,8 @@ def display_chat_history() -> None:
         with st.container(border=True):
             role_label = "**Me**" if msg["role"] == "me" else "**Assistant**"
             st.write(role_label)
-            st.audio(msg["audio"], format="audio/wav")
+            if(role_label=="**Me**"):                
+                st.audio(msg["audio"], format="audio/wav")            
             with st.expander("Show details", expanded=False):
                 st.write(f"**Message:** {msg['content']}")
 
@@ -83,15 +82,6 @@ def main():
         st.write("**Context:**")
         st.info(st.session_state.context)
 
-    # Voice selection
-    st.write("**Voice Selection**")
-    voice_choice = st.selectbox(
-            "Select a voice",
-            options=list(VOICES.keys()),
-            index=0
-    )
-    st.session_state.voice = VOICES[voice_choice]
-
     # Display chat history
     display_chat_history()
 
@@ -126,15 +116,11 @@ def main():
 
                 chat_prompt = pm.get_prompt("chat_prompt", variables=prompt_vars)
                 ai_response = generate_response(chat_prompt, MODEL_CHAT, groq_api_key)
-
-                # Generate audio for AI response
-                audio = generate_audio(ai_response, st.session_state.voice)
-
+                
                 # Add to chat history
                 st.session_state.chat.append({
                         "role": "you",
-                        "content": ai_response,
-                        "audio": audio
+                        "content": ai_response,                        
                 })
 
                 # Refresh the page
