@@ -5,7 +5,6 @@ from typing import Optional
 
 import whisper
 import torchaudio
-from kokoro import KPipeline
 from langchain.chat_models import init_chat_model
 
 
@@ -64,45 +63,4 @@ def generate_response(prompt: str, model_name: str, groq_api_key: str) -> str:
         return response.content if response else "No response generated."
 
     except Exception as e:
-        return f"Error generating response: {str(e)}"
-
-
-def generate_audio(text: str, voice: str) -> Optional[bytes]:
-    """
-    Generate an audio file from a text.
-
-    Args:
-        text: Text to convert to audio
-        voice: Voice to use for generation
-
-    Returns:
-        Audio data in byte format or None of error
-    """
-    try:
-        # Clean text to avoid segmentation issues
-        text = text.replace('\n', ' ')
-
-        # Initialize audio generation pipeline
-        pipeline = KPipeline(lang_code='a')
-
-        # Generate audio
-        generator = pipeline(
-                text,
-                voice=voice,  # Change voice here
-                speed=1,
-                split_pattern=r'\n+'
-        )
-
-        # Take the first generated result
-        for _, _, audio in generator:
-            # Convert tensor to bytes
-            buffer = io.BytesIO()
-            torchaudio.save(buffer, audio.unsqueeze(0), sample_rate=24000, format="wav")
-            buffer.seek(0)
-            return buffer.read()
-
-        return None
-
-    except Exception as e:
-        print(f"Error generating audio: {str(e)}")
-        return None
+        return f"Error generating response: {e!s}"
