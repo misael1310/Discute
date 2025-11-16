@@ -24,7 +24,7 @@ def display_chat_history() -> None:
                 if "audio" in msg:
                     st.audio(msg["audio"], format="audio/wav")
                 else:
-                    st.error("Error processing user's audio, please try again.")  
+                    st.caption("Audio unavailable for this message")
             with st.expander("Show details", expanded=False):
                 st.write(f"**Message:** {msg['content']}")
 
