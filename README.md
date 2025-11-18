@@ -48,7 +48,7 @@ To get "Discute" running locally:
 - Never commit `.env` files to version control; they are automatically ignored by `.gitignore`
 - If you prefer not to use `.env`, you can enter the API key directly in the app, but this is less secure for repeated use
 
-##  Usage Guide
+## Usage Guide
 
 1. **Initial Setup**:
      - Launch the application with `streamlit run app.py`
