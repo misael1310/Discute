@@ -14,7 +14,6 @@ load_dotenv()
 
 class MissingAPIKeyError(Exception):
     """Raised when the GROQ API key is missing or invalid."""
-    pass
 
 
 def _validate_api_key(groq_api_key: Optional[str] = None) -> str:
