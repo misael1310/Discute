@@ -28,7 +28,10 @@ To get "Discute" running locally:
 1. Clone the repository: `git clone https://github.com/5uru/Discute.git`
 2. Change directory: `cd Discute`
 3. Install required dependencies: `pip install -r requirements.txt`
-4. Obtain a Groq API key from https://console.groq.com/home
+4. Set up environment variables:
+   - Copy `.env.example` to `.env`
+   - Add your Groq API key: `GROQ_API_KEY=your_actual_api_key_here`
+   - Alternatively, you can enter the API key directly in the app (not recommended for security)
 5. Run the Streamlit application: `streamlit run app.py`
 
 ## 🧩 System Requirements
@@ -39,11 +42,18 @@ To get "Discute" running locally:
 - Working microphone for voice input
 - Valid Groq API key
 
-## 📚 Usage Guide
+## 🔒 Security Best Practices
+
+- API keys are securely stored in environment variables using a `.env` file
+- Never commit `.env` files to version control; they are automatically ignored by `.gitignore`
+- If you prefer not to use `.env`, you can enter the API key directly in the app, but this is less secure for repeated use
+
+##  Usage Guide
 
 1. **Initial Setup**:
-    - Launch the application with `streamlit run app.py`
-    - Enter your Groq API key in the dedicated field
+     - Launch the application with `streamlit run app.py`
+     - If you configured the `.env` file with your Groq API key, it will be loaded automatically
+     - Otherwise, enter your Groq API key in the provided field
 
 2. **Context Generation**:
     - Describe a situation or use the random generator
