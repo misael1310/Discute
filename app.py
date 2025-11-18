@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 
 from main import transcribe_audio, generate_response
@@ -42,7 +43,11 @@ def main():
     st.caption("Demo application for chatting with an AI assistant.")
 
     # API key input
-    groq_api_key = st.text_input("Enter your Groq API key [Link](https://console.groq.com/home)", type="password")
+    groq_api_key = os.getenv("GROQ_API_KEY")
+    if groq_api_key:
+        st.success("Groq API key loaded from environment variables.")
+    else:
+        groq_api_key = st.text_input("Enter your Groq API key [Link](https://console.groq.com/home)", type="password")
 
     # Initialize session state
     init_session_state()
