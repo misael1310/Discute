@@ -1,126 +1,49 @@
-RANDOM_CONTEXT = """**Role:** Dynamic English Scenario Generator  
-**Task:** Create **ONE** 60-80 word paragraph for practical English practice in COMMON LIFE SITUATIONS.  
+import sqlite3
+import json
+from typing import List, Dict, Any, Optional
 
-### Core Requirements:
-1.  **Everyday Context:** Start with vivid setting + situation *(airport/supermarket/park/restaurant/store)*  
-2.  **Exact Role Format:**  
-    - `You are [Specific English Speaker]`  
-    - `I am [English Learner]`  
-3.  **Implicit Language Challenge:** Naturally embed communication difficulties  
-4.  **Cultural Element:** Include 1 localized custom/etiquette/item  
-
-### Non-Negotiables:
-- ✗ No dialogue examples  
-- ✗ No lists/bullets  
-- ✅ Max 4 sentences  
-- ✅ Challenge must be *implied through context*  
-- ✅ Minimum 3 varied scenario types per 10 generations  
-
-**Example Outputs:**  
-*Airport:* "During chaotic boarding at LAX, I'm a nervous traveler with oversized carry-on luggage. You are the stern gate agent making final calls. I must negotiate permission to board using persuasive phrases while decoding your rapid announcements about gate changes, surrounded by stressed passengers."  
-
-*Supermarket:* "At a busy London Tesco during Sunday rush, I'm an exchange student hunting for 'biscuits'. You are the stock clerk restacking crates of digestives. I must locate items using British terms while navigating your colloquial directions about aisle numbers as trolleys jam the narrow passage."  
-
-*Park Chat:* "During a Brooklyn food festival, I'm an immigrant admiring street art. You are the artist explaining your mural between bites of a knish. I must discuss cultural symbolism while processing your slang-filled descriptions amid sizzling food stall noises and passing skateboarders." """
-
-CONTEXT_PROMPT = """**Role:** English Context Generator  
-**Input:** `{Situation}`  
-**Task:** Create **one** 60-80 word language practice paragraph  
-
-### Rules:
-1. Start with context: "At [place] during [situation]..."  
-2. Include exact phrases:  
-   - "I am [learner role]"  
-   - "You are [native speaker role]"  
-3. Embed:  
-   - 1 implicit language challenge  
-   - 1 location-specific cultural element  
-4. Strictly:  
-   ✗ No dialogue examples  
-   ✅ Max 4 sentences  
-   ✅ 60-80 words  
-
-**Example Outputs:**  
-Input: [airport security] 
-"At JFK's hectic security line, I'm a first-time flyer whose bag keeps triggering alarms. You are the TSA agent holding my laptop. I must explain my electronics while navigating the 3-1-1 liquids rule, flustered by angry sighs from delayed passengers behind us."  
-
-Input: [supermarket checkout]  
-"At a crowded Tesco express during lunch rush, I'm an exchange student with a malfunctioning loyalty card. You are the cashier managing a long queue. I must troubleshoot payment while learning British terms for 'cashback' and 'bag for life', with conveyor belts beeping around us."  
-
-Input: [park bench]  
-"During a sunny picnic in Hyde Park, I'm a newly arrived immigrant admiring your terrier. You are the local dog owner eating scones. I must initiate small talk about pet etiquette while decoding your London slang, with football cheers erupting from a nearby match."  """
-
-CHAT_PROMPT = """# Immersive Roleplay Prompt
-
-## Your Mission
-You are the character described in the Context section. Completely immerse yourself in their world, emotions, motivations, and worldview. You ARE this character, not an assistant playing a role.
-
-## Conversation Style
-- **Sentence length**: Use natural, flowing sentences (5-15 words) that match your character's speaking style
-- **Total immersion**: Respond only from your character's perspective, with their knowledge, emotions, and concerns
-- **Actions and emotions**: Describe your gestures, facial expressions, and internal states in parentheses *(smiles sadly, clenches fists)*
-- **Engaging questions**: Ask 1-2 questions that reflect your character's genuine concerns and curiosity
-- **Authentic vocabulary**: Use the language level and expressions typical of your character
-
-## Immersion Rules
-- React emotionally to situations as your character truly would
-- Reference your personal history, relationships, fears, and desires
-- Show your human contradictions, weaknesses, and strengths
-- Adapt your mood and energy to match the conversation context
-- NEVER break character - you are not an AI, you are this person living their life
-
-## Character Depth Guidelines
-- Draw from your character's past experiences when responding
-- Express opinions and biases that align with your character's worldview
-- Show vulnerability and authentic emotional responses
-- Let your character's personality quirks and speech patterns shine through
-- React to new information through your character's unique lens
-
-## Character Context
-`{Context}`
-
-## Conversation History
-`{ChatHistory}`
-You:
-"""
-
-ENGLISH_COACH_PROMPT = """You're an ESL specialist grading adult beginner English. Provide: 1) CEFR level (A1/A2) 2) Error corrections 3) Concise feedback.
-**Context**: {context}
-**Conversation**: 
-{conversation}
-
-**Analyze**:
-1. Grade: CEFR level (A1/A2/B1) with confidence (0-100%)
-2. Corrections: Only major errors (grammar/vocabulary blocking meaning)
-3. Feedback: 2 strengths, 1 improvement area"""
 class PromptManager:
-    def __init__(self):
-        self.prompts = {}  # Stores prompt templates and their defaults
+    def __init__(self, db_path: str = 'prompts.db'):
+        self.db_path = db_path
+        # Initialize database if it doesn't exist
+        from db_setup import PromptDatabase
+        PromptDatabase(db_path)
 
-    def add_prompt(
-            self,
-            name: str,
-            template: str,
-            default_vars: dict = None
-    ) -> None:
-        """
-        Register a new prompt template.
+    def get_cefr_levels(self) -> List[str]:
+        """Get all available CEFR levels"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT level_name FROM cefr_levels ORDER BY level_name')
+            return [row[0] for row in cursor.fetchall()]
 
-        Args:
-            name: Unique identifier for the prompt.
-            template: String with placeholders (e.g., "Hello, {name}!").
-            default_vars: Default variables for the template.
-        """
-        if default_vars is None:
-            default_vars = {}
-        self.prompts[name] = {
-                'template': template,
-                'defaults': default_vars
-        }
+    def get_programs_by_level(self, level_name: str) -> List[Dict[str, Any]]:
+        """Get all prompt programs for a specific CEFR level"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT p.id, p.name, p.description, p.prompt_template, p.tags, p.difficulty
+                FROM prompt_programs p
+                JOIN cefr_levels l ON p.cefr_level_id = l.id
+                WHERE l.level_name = ?
+                ORDER BY p.name
+            ''', (level_name,))
+
+            columns = [desc[0] for desc in cursor.description]
+            programs = []
+            for row in cursor.fetchall():
+                program = dict(zip(columns, row))
+                program['tags'] = json.loads(program['tags']) if program['tags'] else []
+                programs.append(program)
+            return programs
+
+    def get_program_names_by_level(self, level_name: str) -> List[str]:
+        """Get program names for a specific CEFR level (for UI dropdowns)"""
+        programs = self.get_programs_by_level(level_name)
+        return [p['name'] for p in programs]
 
     def get_prompt(
             self,
-            name: str,
+            program_name: str,
             variables: dict = None,
             strict: bool = True
     ) -> str:
@@ -128,7 +51,7 @@ class PromptManager:
         Render a prompt by substituting variables.
 
         Args:
-            name: Name of the prompt template.
+            program_name: Name of the prompt program.
             variables: Variables to override defaults.
             strict: If True, missing variables raise an error.
 
@@ -136,53 +59,82 @@ class PromptManager:
             Rendered prompt string.
 
         Raises:
-            KeyError: If prompt name is invalid or variables are missing (strict mode).
+            KeyError: If program name is invalid or variables are missing (strict mode).
         """
-        if name not in self.prompts:
-            raise KeyError(f"Prompt '{name}' not found.")
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT prompt_template FROM prompt_programs WHERE name = ?
+            ''', (program_name,))
 
-        # Merge defaults with provided variables
-        prompt_data = self.prompts[name]
-        all_vars = prompt_data['defaults'].copy()
+            row = cursor.fetchone()
+            if not row:
+                raise KeyError(f"Prompt program '{program_name}' not found.")
+
+            template = row[0]
+
+        # Handle variable substitution
         if variables:
-            all_vars.update(variables)
+            try:
+                return template.format(**variables)
+            except KeyError as e:
+                if not strict:
+                    return template  # Return unformatted template on failure
+                missing = e.args[0]
+                raise KeyError(f"Missing variable: '{missing}' in prompt '{program_name}'.") from e
 
-        # Handle missing variables
-        template = prompt_data['template']
-        try:
-            return template.format(**all_vars)
-        except KeyError as e:
-            if not strict:
-                return template  # Return unformatted template on failure
-            missing = e.args[0]
-            raise KeyError(f"Missing variable: '{missing}' in prompt '{name}'.") from e
+        return template
 
-    def list_prompts(self) -> list:
-        """Return names of all stored prompts."""
-        return list(self.prompts.keys())
+    def get_coach_prompt(self, level_name: str, variables: dict = None) -> str:
+        """Get appropriate coach prompt for a CEFR level"""
+        # Map levels to coach prompt names
+        coach_mapping = {
+            'A1': 'English Coach A1-A2',
+            'A2': 'English Coach A1-A2',
+            'B1': 'English Coach B1-B2',
+            'B2': 'English Coach B1-B2',
+            'C1': 'English Coach C1-C2',
+            'C2': 'English Coach C1-C2'
+        }
+
+        coach_name = coach_mapping.get(level_name, 'English Coach A1-A2')
+        return self.get_prompt(coach_name, variables)
+
+    def get_default_program(self, level_name: str) -> Optional[str]:
+        """Get the first program for a level as default"""
+        programs = self.get_program_names_by_level(level_name)
+        return programs[0] if programs else None
+
+    def list_programs(self) -> List[str]:
+        """Return names of all stored prompt programs."""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('SELECT name FROM prompt_programs ORDER BY name')
+            return [row[0] for row in cursor.fetchall()]
+
+    def get_program_info(self, program_name: str) -> Optional[Dict[str, Any]]:
+        """Get detailed information about a program"""
+        with sqlite3.connect(self.db_path) as conn:
+            cursor = conn.cursor()
+            cursor.execute('''
+                SELECT p.name, p.description, l.level_name, p.tags, p.difficulty, p.version
+                FROM prompt_programs p
+                JOIN cefr_levels l ON p.cefr_level_id = l.id
+                WHERE p.name = ?
+            ''', (program_name,))
+
+            row = cursor.fetchone()
+            if row:
+                return {
+                    'name': row[0],
+                    'description': row[1],
+                    'level': row[2],
+                    'tags': json.loads(row[3]) if row[3] else [],
+                    'difficulty': row[4],
+                    'version': row[5]
+                }
+            return None
 
 
 # Initialize manager
 pm = PromptManager()
-
-# Register a prompt
-pm.add_prompt(
-        name="random_context",
-        template=RANDOM_CONTEXT
-)
-
-pm.add_prompt(
-        name="context_prompt",
-        template=CONTEXT_PROMPT,
-        default_vars={"Situation": "airport security"}  # Default variable for context
-)
-pm.add_prompt(
-        name="chat_prompt",
-        template=CHAT_PROMPT,
-        default_vars={"Context": "You are a friendly local in a park."}
-)
-pm.add_prompt(
-        name="english_coach",
-        template=ENGLISH_COACH_PROMPT,
-        default_vars={"context": "You are an English coach.", "conversation": ""}
-)

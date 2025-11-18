@@ -13,6 +13,10 @@ def init_session_state() -> None:
         st.session_state.context = ""
     if "chat" not in st.session_state:
         st.session_state.chat = []
+    if "selected_level" not in st.session_state:
+        st.session_state.selected_level = "A1"  # Default to beginner
+    if "selected_program" not in st.session_state:
+        st.session_state.selected_program = pm.get_default_program("A1") or ""
 
 def display_chat_history() -> None:
     """Display the chat history with audio playback"""
@@ -46,6 +50,42 @@ def main():
 
     # Initialize session state
     init_session_state()
+
+    # CEFR Level and Program Selection
+    st.write("## Language Learning Settings")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        cefr_levels = pm.get_cefr_levels()
+        selected_level = st.selectbox(
+            "Select your CEFR level:",
+            options=cefr_levels,
+            index=cefr_levels.index(st.session_state.selected_level) if st.session_state.selected_level in cefr_levels else 0,
+            help="Choose your current English proficiency level"
+        )
+        st.session_state.selected_level = selected_level
+
+    with col2:
+        program_options = pm.get_program_names_by_level(selected_level)
+        if program_options:
+            selected_program = st.selectbox(
+                "Select a conversation program:",
+                options=program_options,
+                index=program_options.index(st.session_state.selected_program) if st.session_state.selected_program in program_options else 0,
+                help="Choose a scenario to practice"
+            )
+            st.session_state.selected_program = selected_program
+
+            # Display program description
+            program_info = pm.get_program_info(selected_program)
+            if program_info:
+                st.caption(f"**{program_info['description']}** (Difficulty: {program_info['difficulty']})")
+        else:
+            st.warning("No programs available for this level yet.")
+            st.session_state.selected_program = ""
+
+    st.divider()
 
     # Display the current context
     if st.session_state.context:
@@ -84,7 +124,18 @@ def main():
                         "ChatHistory": chat_history
                 }
 
-                chat_prompt = pm.get_prompt("chat_prompt", variables=prompt_vars)
+                # Use selected program for chat prompt
+                if st.session_state.selected_program:
+                    chat_prompt = pm.get_prompt(st.session_state.selected_program, variables=prompt_vars)
+                else:
+                    # Fallback to default if no program selected
+                    default_program = pm.get_default_program(st.session_state.selected_level)
+                    if default_program:
+                        chat_prompt = pm.get_prompt(default_program, variables=prompt_vars)
+                    else:
+                        st.error("No conversation programs available. Please check database setup.")
+                        st.stop()
+
                 ai_response = generate_response(chat_prompt, MODEL_CHAT, groq_api_key)
 
                 # Add to chat history
@@ -111,7 +162,8 @@ def main():
                     "conversation": conversation
             }
 
-            coach_prompt = pm.get_prompt("english_coach", variables=coach_vars)
+            # Use level-appropriate coach prompt
+            coach_prompt = pm.get_coach_prompt(st.session_state.selected_level, variables=coach_vars)
             review = generate_response(coach_prompt, MODEL_CHAT, groq_api_key)
 
             st.write("**Coach Review:**")

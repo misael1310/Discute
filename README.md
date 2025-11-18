@@ -29,7 +29,22 @@ To get "Discute" running locally:
 2. Change directory: `cd Discute`
 3. Install required dependencies: `pip install -r requirements.txt`
 4. Obtain a Groq API key from https://console.groq.com/home
-5. Run the Streamlit application: `streamlit run app.py`
+5. **Initialize the prompt database:** `python db_setup.py`
+   - This creates `prompts.db` and populates it with CEFR-level categorized prompts
+6. Run the Streamlit application: `streamlit run app.py`
+
+## 🏗️ Architecture Overview
+
+Discute uses a modular architecture with SQLite database-driven prompt management:
+
+- **Database Layer**: SQLite database (`prompts.db`) stores CEFR-categorized prompts
+- **PromptManager**: Database interface for retrieving and formatting prompts
+- **Streamlit UI**: User interface for level/program selection and conversation
+- **AI Integration**: Groq API for language model interactions
+
+### Database Schema
+- `cefr_levels`: CEFR proficiency levels (A1-C2)
+- `prompt_programs`: Conversation scenarios mapped to CEFR levels with tags and metadata
 
 ## 🧩 System Requirements
 
@@ -38,23 +53,31 @@ To get "Discute" running locally:
 - Stable internet connection for AI models
 - Working microphone for voice input
 - Valid Groq API key
+- SQLite (built-in with Python)
 
 ## 📚 Usage Guide
 
 1. **Initial Setup**:
-    - Launch the application with `streamlit run app.py`
-    - Enter your Groq API key in the dedicated field
+     - Launch the application with `streamlit run app.py`
+     - Enter your Groq API key in the dedicated field
 
-2. **Context Generation**:
-    - Describe a situation or use the random generator
-    - Click "Generate Context" to create a conversation scenario
+2. **Language Learning Settings**:
+     - Select your CEFR level (A1-C2) from the dropdown
+     - Choose a conversation program appropriate for your level
+     - Each program includes difficulty rating and description
 
 3. **Conversation**:
-    - Select a voice from the dropdown menu
-    - Record your voice message using the audio input
-    - Send your message with the "Send" button
-    - Listen to the AI-generated response via Kokoro TTS
+     - Record your voice message using the audio input
+     - Send your message with the "Send" button
+     - The AI responds using the selected conversation program
+     - Continue the conversation to practice the chosen scenario
 
-4. **Review**:
-    - Use "Review and Correct" to get feedback on your language skills
-    - View corrections and improvement suggestions
+4. **Review and Feedback**:
+     - Use "Review and Correct" to get personalized feedback
+     - Feedback is tailored to your selected CEFR level
+     - View corrections, level assessment, and improvement suggestions
+
+### Available Programs by Level
+- **A1-A2**: Basic greetings, ordering food, simple interactions
+- **B1-B2**: Travel scenarios, job interviews, complex conversations
+- **C1-C2**: Academic discussions, debates, professional scenarios
