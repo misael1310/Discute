@@ -85,22 +85,11 @@ def generate_response(prompt: str, model_name: str, groq_api_key: Optional[str] 
         # Validate and get API key
         groq_api_key = _validate_api_key(groq_api_key)
 
-        # Set API key in environment (required by langchain)
-        original_key = os.environ.get("GROQ_API_KEY")
-        os.environ["GROQ_API_KEY"] = groq_api_key
+        # Initialize and invoke the model with API key
+        model = init_chat_model(model_name, model_provider="groq", api_key=groq_api_key)
+        response = model.invoke(prompt)
 
-        try:
-            # Initialize and invoke the model
-            model = init_chat_model(model_name, model_provider="groq")
-            response = model.invoke(prompt)
-
-            return response.content if response else "No response generated."
-        finally:
-            # Restore original API key if it existed, else remove
-            if original_key is not None:
-                os.environ["GROQ_API_KEY"] = original_key
-            else:
-                os.environ.pop("GROQ_API_KEY", None)
+        return response.content if response else "No response generated."
 
     except Exception as e:
         return f"Error generating response: {e!s}"
