@@ -15,6 +15,11 @@ load_dotenv()
 class MissingAPIKeyError(Exception):
     """Raised when the GROQ API key is missing or invalid."""
 
+    def __init__(self, message: Optional[str] = None) -> None:
+        if message is None:
+            message = "GROQ_API_KEY is required but not provided or set in environment."
+        super().__init__(message)
+
 
 def _validate_api_key(groq_api_key: Optional[str] = None) -> str:
     """
@@ -32,7 +37,7 @@ def _validate_api_key(groq_api_key: Optional[str] = None) -> str:
     if groq_api_key is None:
         groq_api_key = os.getenv("GROQ_API_KEY")
     if not groq_api_key:
-        raise MissingAPIKeyError("GROQ_API_KEY is required but not provided or set in environment.")
+        raise MissingAPIKeyError()
     return groq_api_key
 
 
